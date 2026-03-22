@@ -44,7 +44,12 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['onnxruntime-web'],
+    exclude: ['onnxruntime-web', '@mediapipe/tasks-vision'],
+  },
+  resolve: {
+    // @mediapipe/tasks-vision の不正な exports フィールドを無視して
+    // メインエントリ (module/main) で解決させる
+    conditions: [],
   },
   // .onnx は public/ から静的配信するため assetsInclude に含めない
 })
