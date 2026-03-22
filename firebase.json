@@ -23,6 +23,14 @@
     ],
     "rewrites": [
       {
+        "source": "/sample-images/**",
+        "destination": "/sample-images/**"
+      },
+      {
+        "source": "/models/**",
+        "destination": "/models/**"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

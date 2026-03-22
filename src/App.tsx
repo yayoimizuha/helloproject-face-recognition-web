@@ -2,7 +2,7 @@ import {
   useEffect, useRef, useState, useCallback,
 } from 'react'
 import {
-  ImageIcon, Upload, Loader, Settings, Play, HelpCircle,
+  ImageIcon, Upload, Loader, Settings, Play, HelpCircle, Images,
 } from 'lucide-react'
 
 import type { RecognitionResult, FaceDetection, ModelConfig } from './types'
@@ -375,6 +375,41 @@ export default function App() {
         </form>
       </dialog>
 
+      {/* ── サンプル画像モーダル ──────────────────────────────────────────── */}
+      <dialog id="modal-samples" className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box w-full max-w-2xl">
+          <h3 className="font-bold text-lg mb-3">サンプル画像</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {SAMPLE_IMAGES.map(s => (
+              <button
+                key={s.filename}
+                className="flex flex-col gap-1 rounded-lg overflow-hidden border border-base-300 hover:border-primary transition-colors cursor-pointer bg-base-200"
+                onClick={() => {
+                  handleSampleImage(s.url)
+                  ;(document.getElementById('modal-samples') as HTMLDialogElement)?.close()
+                }}
+              >
+                <img
+                  src={s.url}
+                  alt={s.label}
+                  className="w-full aspect-square object-cover"
+                  loading="lazy"
+                />
+                <span className="text-xs px-2 py-1 text-center truncate w-full opacity-70">{s.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="modal-action">
+            <form method="dialog">
+              <button className="btn btn-sm">閉じる</button>
+            </form>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
       {/* ── メインコンテンツ（PC: max-w-3xl 中央寄せ、スマホ: 全幅） ── */}
       <div className="w-full max-w-3xl mx-auto flex flex-col gap-3 px-0 sm:px-3">
 
@@ -533,19 +568,15 @@ export default function App() {
               </div>
 
               <div className="flex gap-3">
-                {/* サンプル画像選択 */}
+                {/* サンプル画像ボタン */}
                 {SAMPLE_IMAGES.length > 0 && (
-                  <select
-                    className="select select-sm select-bordered flex-1"
-                    value=""
-                    onChange={e => { if (e.target.value) handleSampleImage(e.target.value) }}
+                  <button
+                    className="btn btn-outline btn-sm gap-2"
+                    onClick={() => (document.getElementById('modal-samples') as HTMLDialogElement)?.showModal()}
                     disabled={isLoading}
                   >
-                    <option value="" disabled>サンプル画像を選択...</option>
-                    {SAMPLE_IMAGES.map(s => (
-                      <option key={s.filename} value={s.url}>{s.label}</option>
-                    ))}
-                  </select>
+                    <Images size={15} /> サンプル画像を利用
+                  </button>
                 )}
                 <label className={`btn btn-outline btn-sm gap-2 cursor-pointer ${isLoading ? 'btn-disabled' : ''}`}>
                   <Upload size={15} /> 画像を選択
