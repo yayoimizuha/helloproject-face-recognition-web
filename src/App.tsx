@@ -14,6 +14,22 @@ import { cropFaceRaw } from './services/faceAlignment'
 import { FaceOverlayCanvas } from './components/FaceOverlayCanvas'
 import { RecognitionResultList } from './components/RecognitionResultList'
 
+/** public/sample-images/ のファイル名から表示ラベルを生成（"名前=グループ=..." → "名前 (グループ)"） */
+function sampleImageLabel(filename: string): string {
+  const base = filename.replace(/\.[^.]+$/, '') // 拡張子除去
+  const parts = base.split('=')
+  if (parts.length >= 2) return `${parts[0]} (${parts[1]})`
+  return parts[0]
+}
+
+/** ビルド時に埋め込まれたサンプル画像一覧 */
+const SAMPLE_IMAGES: { filename: string; url: string; label: string }[] =
+  __SAMPLE_IMAGES__.map(f => ({
+    filename: f,
+    url: `/sample-images/${encodeURIComponent(f)}`,
+    label: sampleImageLabel(f),
+  }))
+
 /** バイト数を "X.XMB" 形式に変換 */
 function fmtMB(filename: string): string {
   const bytes = __MODEL_FILE_SIZES__[filename] ?? 0
@@ -93,6 +109,16 @@ export default function App() {
   useEffect(() => { yoloSizeRef.current = yoloSize }, [yoloSize])
   useEffect(() => { recogModelKeyRef.current = recogModelKey }, [recogModelKey])
 
+  // 初回訪問時に説明モーダルを自動表示
+  useEffect(() => {
+    const STORAGE_KEY = 'face_recognition_visited'
+    if (!localStorage.getItem(STORAGE_KEY)) {
+      localStorage.setItem(STORAGE_KEY, '1')
+      const dialog = document.getElementById('modal-about') as HTMLDialogElement | null
+      dialog?.showModal()
+    }
+  }, [])
+
   // アンマウント時クリーンアップ
   useEffect(() => {
     return () => {
@@ -159,6 +185,19 @@ export default function App() {
     setRecognizeMs(null)
     setAppStatus('idle')
     e.target.value = ''
+  }, [imageUrl])
+
+  // ── サンプル画像選択 ────────────────────────────────────────────────────────
+  const handleSampleImage = useCallback((url: string) => {
+    if (imageUrl?.startsWith('blob:')) URL.revokeObjectURL(imageUrl)
+    setImageUrl(url)
+    setImageReady(false)
+    setResults([])
+    setDetections([])
+    setFaceCount(0)
+    setDetectMs(null)
+    setRecognizeMs(null)
+    setAppStatus('idle')
   }, [imageUrl])
 
   // 画像ロード完了 → 表示サイズだけ計算
@@ -494,7 +533,21 @@ export default function App() {
               </div>
 
               <div className="flex gap-3">
-                <label className={`btn btn-outline btn-sm flex-1 gap-2 cursor-pointer ${isLoading ? 'btn-disabled' : ''}`}>
+                {/* サンプル画像選択 */}
+                {SAMPLE_IMAGES.length > 0 && (
+                  <select
+                    className="select select-sm select-bordered flex-1"
+                    value=""
+                    onChange={e => { if (e.target.value) handleSampleImage(e.target.value) }}
+                    disabled={isLoading}
+                  >
+                    <option value="" disabled>サンプル画像を選択...</option>
+                    {SAMPLE_IMAGES.map(s => (
+                      <option key={s.filename} value={s.url}>{s.label}</option>
+                    ))}
+                  </select>
+                )}
+                <label className={`btn btn-outline btn-sm gap-2 cursor-pointer ${isLoading ? 'btn-disabled' : ''}`}>
                   <Upload size={15} /> 画像を選択
                   <input
                     ref={fileInputRef}
@@ -503,7 +556,7 @@ export default function App() {
                   />
                 </label>
                 <button
-                  className="btn btn-primary btn-sm flex-1 gap-2"
+                  className="btn btn-primary btn-sm gap-2"
                   onClick={handleRun} disabled={!canRun}
                 >
                   <Play size={15} /> 実行

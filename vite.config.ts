@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { statSync } from 'fs'
+import { statSync, readdirSync } from 'fs'
 import { resolve } from 'path'
 
 /** public/models/ 以下の .onnx ファイルサイズをビルド時に収集する */
@@ -30,11 +30,24 @@ function getModelFileSizes(): Record<string, number> {
   return sizes
 }
 
+/** public/sample-images/ 以下の画像ファイル名一覧をビルド時に収集する */
+function getSampleImageFiles(): string[] {
+  try {
+    return readdirSync(resolve(__dirname, 'public/sample-images'))
+      .filter(f => /\.(jpe?g|png|webp|gif)$/i.test(f))
+      .sort()
+  } catch {
+    return []
+  }
+}
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   define: {
     // ビルド時にファイルサイズを定数として埋め込む
     __MODEL_FILE_SIZES__: JSON.stringify(getModelFileSizes()),
+    // ビルド時にサンプル画像ファイル名一覧を埋め込む
+    __SAMPLE_IMAGES__: JSON.stringify(getSampleImageFiles()),
   },
   server: {
     port: 3000,
