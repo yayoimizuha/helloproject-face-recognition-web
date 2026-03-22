@@ -291,15 +291,20 @@ export default function App() {
           <div className="flex flex-col gap-2 text-sm opacity-80">
             <p>
               ブラウザ上で完全にローカル動作する顔認識デモです。
-              アップロードした画像はサーバーに送信されません。
+              アップロードした画像はサーバーに送信されず、すべての推論はデバイス上で完結します。
             </p>
             <p>
               <strong>顔検出</strong>に YOLOv12-Face、<strong>顔認識</strong>に独自学習した分類モデル、
               <strong>顔アライメント</strong>に MediaPipe BlazeFace を使用しています。
+              推論エンジンには <strong>ONNX Runtime Web</strong> を採用しており、WebAssembly または WebGPU バックエンドで動作します。
             </p>
             <p>
               異常検知スコア（Anomaly Score）が閾値を超えた顔は
               登録外の人物として <span className="text-error font-semibold">Anomaly</span> 判定されます。
+            </p>
+            <p className="text-warning">
+              ブラウザ上での WASM 実行はネイティブ環境と比べて推論速度が大幅に低下します。
+              特にモデルサイズが大きい場合や WebGPU が利用できない環境では、処理に数秒〜十数秒かかることがあります。
             </p>
             <div className="mt-1 flex flex-col gap-1">
               <div className="flex gap-2 items-center">
