@@ -26,7 +26,7 @@ function sampleImageLabel(filename: string): string {
 const SAMPLE_IMAGES: { filename: string; url: string; label: string }[] =
   __SAMPLE_IMAGES__.map(f => ({
     filename: f,
-    url: `/sample-images/${encodeURIComponent(f)}`,
+    url: `/sample-images/${encodeURI(f)}`,
     label: sampleImageLabel(f),
   }))
 
