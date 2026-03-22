@@ -224,6 +224,9 @@ export default function App() {
     setDetectMs(null)
     setRecognizeMs(null)
 
+    const imgWidth = img.naturalWidth
+    const imgHeight = img.naturalHeight
+
     try {
       if (!modelRef.current) {
         setAppStatus('loading-model')
@@ -247,7 +250,8 @@ export default function App() {
 
       const t0detect = performance.now()
       const dets = await det.detect(bitmap, detectThreshold)
-      setDetectMs(performance.now() - t0detect)
+      const detectElapsed = performance.now() - t0detect
+      setDetectMs(detectElapsed)
       setDetections(dets)
       setFaceCount(dets.length)
 
@@ -267,14 +271,34 @@ export default function App() {
       const recResults = await runStaticImageClassification(
         m, bitmap, dets, recogThreshold, landmarksList, minFacePx,
       )
-      setRecognizeMs(performance.now() - t0recog)
+      const recognizeElapsed = performance.now() - t0recog
+      setRecognizeMs(recognizeElapsed)
       bitmap.close()
 
       setResults(recResults)
       setAppStatus('ready')
+
+      // GA4 イベント計測
+      gtag('event', 'run_inference', {
+        recog_model: recogModelKeyRef.current,
+        yolo_size: yoloSizeRef.current,
+        backend: epRef.current,
+        image_width: imgWidth,
+        image_height: imgHeight,
+        face_count: dets.length,
+        detect_ms: Math.round(detectElapsed),
+        recognize_ms: Math.round(recognizeElapsed),
+        total_ms: Math.round(detectElapsed + recognizeElapsed),
+      })
     } catch (err) {
       setErrorMsg(String(err))
       setAppStatus('error')
+      gtag('event', 'run_inference_error', {
+        recog_model: recogModelKeyRef.current,
+        yolo_size: yoloSizeRef.current,
+        backend: epRef.current,
+        error_message: String(err),
+      })
     }
   }, [detectThreshold, recogThreshold, minFacePx])
 
