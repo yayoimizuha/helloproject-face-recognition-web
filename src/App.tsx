@@ -81,6 +81,7 @@ export default function App() {
   const [recogThreshold, setRecogThreshold] = useState(0.60)     // 顔認識 confidence 閾値
   const [minFacePx, setMinFacePx] = useState(48)                 // Too Small 判定ピクセル数
   const [showLandmarks, setShowLandmarks] = useState(false)       // ランドマーク表示
+  const [samplesModalOpen, setSamplesModalOpen] = useState(false) // サンプル画像モーダル
 
   // ── 画像 ────────────────────────────────────────────────────────────────────
   const [imageUrl, setImageUrl] = useState<string | null>(null)
@@ -400,38 +401,34 @@ export default function App() {
       </dialog>
 
       {/* ── サンプル画像モーダル ──────────────────────────────────────────── */}
-      <dialog id="modal-samples" className="modal modal-bottom sm:modal-middle">
+      <dialog className={`modal modal-bottom sm:modal-middle${samplesModalOpen ? ' modal-open' : ''}`}>
         <div className="modal-box w-full max-w-2xl">
           <h3 className="font-bold text-lg mb-3">サンプル画像</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {SAMPLE_IMAGES.map(s => (
+            {/* モーダルが開いているときだけ img をレンダリングしてロードを遅延 */}
+            {samplesModalOpen && SAMPLE_IMAGES.map(s => (
               <button
                 key={s.filename}
                 className="flex flex-col gap-1 rounded-lg overflow-hidden border border-base-300 hover:border-primary transition-colors cursor-pointer bg-base-200"
                 onClick={() => {
                   handleSampleImage(s.url)
-                  ;(document.getElementById('modal-samples') as HTMLDialogElement)?.close()
+                  setSamplesModalOpen(false)
                 }}
               >
                 <img
                   src={s.url}
                   alt={s.label}
                   className="w-full aspect-square object-cover"
-                  loading="lazy"
                 />
                 <span className="text-xs px-2 py-1 text-center truncate w-full opacity-70">{s.label}</span>
               </button>
             ))}
           </div>
           <div className="modal-action">
-            <form method="dialog">
-              <button className="btn btn-sm">閉じる</button>
-            </form>
+            <button className="btn btn-sm" onClick={() => setSamplesModalOpen(false)}>閉じる</button>
           </div>
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
-        </form>
+        <div className="modal-backdrop" onClick={() => setSamplesModalOpen(false)} />
       </dialog>
 
       {/* ── メインコンテンツ（PC: max-w-3xl 中央寄せ、スマホ: 全幅） ── */}
@@ -596,7 +593,7 @@ export default function App() {
                 {SAMPLE_IMAGES.length > 0 && (
                   <button
                     className="btn btn-outline btn-sm gap-2"
-                    onClick={() => (document.getElementById('modal-samples') as HTMLDialogElement)?.showModal()}
+                    onClick={() => setSamplesModalOpen(true)}
                     disabled={isLoading}
                   >
                     <Images size={15} /> サンプル画像を利用
